@@ -91,6 +91,51 @@ python main.py run
 
 ---
 
+## Разработка в Claude Code
+
+Проект готов к работе в [Claude Code](https://docs.claude.com/en/docs/claude-code) —
+в корне лежит `CLAUDE.md` с контекстом (архитектура, команды, конвенции),
+который Claude Code читает автоматически.
+
+**1. Распакуй архив** (если получил `daily-digest.zip`):
+
+```bash
+unzip daily-digest.zip -d daily-digest
+cd daily-digest
+```
+
+Внутри уже есть инициализированный git-репозиторий с первым коммитом —
+проверь: `git log --oneline`.
+
+**2. Установи Claude Code** (если ещё нет):
+
+```bash
+npm install -g @anthropic-ai/claude-code
+```
+
+**3. Открой проект:**
+
+```bash
+cd daily-digest
+claude
+```
+
+Claude Code подхватит `CLAUDE.md` и сразу будет в курсе устройства проекта.
+Дальше можно просить его, например: «добавь чтение Telegram-каналов как
+источник», «напиши тесты для auth.py», «добавь кнопку обновления на дашборд».
+
+**4. (Опционально) Запушь в свой репозиторий:**
+
+```bash
+git remote add origin git@github.com:ТВОЙ_АККАУНТ/daily-digest.git
+git push -u origin main
+```
+
+> `.env` уже в `.gitignore` — секреты не попадут в репозиторий.
+> Перед первым запуском не забудь `cp .env.example .env` и заполнить ключи.
+
+---
+
 ## Режимы запуска
 
 | Команда | Что делает |
