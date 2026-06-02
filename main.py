@@ -13,6 +13,7 @@ import logging
 
 from flask import Flask, Response, request, redirect, make_response, jsonify
 from apscheduler.schedulers.background import BackgroundScheduler
+from waitress import serve as waitress_serve
 
 from app.config import config
 from app.digest import build_digest
@@ -157,8 +158,11 @@ def main():
     if mode in ("serve", "web"):
         start_auth_bot()
 
-    log.info("Веб-сервер: http://%s:%s", config.WEB_HOST, config.WEB_PORT)
-    app.run(host=config.WEB_HOST, port=config.WEB_PORT, debug=False)
+    # Прод-сервер: waitress (WSGI). Планировщик и auth-бот уже запущены выше
+    # как фоновые потоки в ЭТОМ же процессе — поэтому держим один процесс
+    # (in-memory AuthStore общий для веба и бота, нельзя разносить по воркерам).
+    log.info("Веб-сервер (waitress): http://%s:%s", config.WEB_HOST, config.WEB_PORT)
+    waitress_serve(app, host=config.WEB_HOST, port=config.WEB_PORT)
 
 
 if __name__ == "__main__":
