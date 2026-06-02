@@ -1,27 +1,16 @@
 services:
   digest:
-    build: .
+    image: ghcr.io/rensite/dailydigest:latest
     container_name: daily-digest
     restart: unless-stopped
     env_file: .env
     expose:
       - "8080"
+    networks:
+      - proxy
 
-  caddy:
-    image: caddy:2
-    container_name: daily-digest-caddy
-    restart: unless-stopped
-    depends_on:
-      - digest
-    ports:
-      - "80:80"
-      - "443:443"
-    env_file: .env
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy_data:/data
-      - caddy_config:/config
-
-volumes:
-  caddy_data:
-  caddy_config:
+# HTTPS и маршрутизация по доменам — через общий Caddy (стек ~/proxy),
+# который владеет 80/443 на весь сервер. Здесь только подключаемся к его сети.
+networks:
+  proxy:
+    external: true
