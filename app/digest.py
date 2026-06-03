@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 from .config import config
 from .sources.weather import get_weather
 from .sources.currency import get_rates
+from .sources.crypto import get_crypto
 from .sources.news import get_news
 from .sources.mail import get_emails
 from .llm import LLMClient
@@ -24,6 +25,7 @@ def build_digest() -> dict:
         config.WEATHER_TZ, config.WEATHER_CITY,
     )
     rates = get_rates(config.CURRENCIES)
+    crypto = get_crypto(config.CRYPTO_COINS)
     news = get_news(config.NEWS_FEEDS, config.NEWS_MAX_ITEMS)
 
     if config.gmail_enabled:
@@ -38,13 +40,14 @@ def build_digest() -> dict:
     recommendations = _build_recommendations(weather, rates, mail)
 
     # --- Умный слой (LLM) ---
-    ai = _build_intelligence(weather, rates, news, mail, todos)
+    ai = _build_intelligence(weather, rates, news, crypto, mail, todos)
 
     return {
         "generated_at": now.strftime("%d.%m.%Y %H:%M"),
         "weekday": _weekday_ru(now),
         "weather": weather,
         "rates": rates,
+        "crypto": crypto,
         "news": news,
         "mail": mail,
         "todos": todos,
@@ -53,7 +56,7 @@ def build_digest() -> dict:
     }
 
 
-def _build_intelligence(weather, rates, news, mail, todos) -> dict:
+def _build_intelligence(weather, rates, news, crypto, mail, todos) -> dict:
     """Прогоняет данные через LLM. При недоступности — пустые поля."""
     ai = {
         "enabled": False,
@@ -75,7 +78,8 @@ def _build_intelligence(weather, rates, news, mail, todos) -> dict:
 
     try:
         ai["greeting"] = intelligence.morning_greeting(
-            llm, profile, weather, rates, todos, mail)
+            llm, profile, weather, rates, todos, mail,
+            news=news, crypto=crypto)
     except Exception as e:
         log.warning("greeting failed: %s", e)
 

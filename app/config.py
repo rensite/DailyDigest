@@ -33,6 +33,10 @@ class Config:
     # Курсы
     CURRENCIES = _split(os.getenv("CURRENCIES", "USD,EUR"))
 
+    # Криптовалюты (id CoinGecko). Пусто → карточка крипты скрыта.
+    CRYPTO_COINS = _split(
+        os.getenv("CRYPTO_COINS", "bitcoin,ethereum,the-open-network"))
+
     # Расписание
     DIGEST_TIME = os.getenv("DIGEST_TIME", "08:00")
 

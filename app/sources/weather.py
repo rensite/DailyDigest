@@ -12,6 +12,27 @@ WMO = {
 }
 
 
+def _next_hours(hourly: dict, current_time, count: int) -> list:
+    """Температуры на ближайшие `count` часов начиная с текущего часа.
+
+    Open-Meteo отдаёт почасовой ряд от начала суток; находим индекс текущего
+    часа и берём следующие `count` значений. Если что-то пошло не так —
+    возвращаем пустой список (карточка просто не рисует график)."""
+    times = hourly.get("time", []) or []
+    temps = hourly.get("temperature_2m", []) or []
+    if not times or not temps:
+        return []
+    start = 0
+    if current_time:
+        # current_time вида "2026-06-03T07:00"; почасовые тоже до минут
+        cur_hour = current_time[:13]  # "2026-06-03T07"
+        for i, t in enumerate(times):
+            if t[:13] >= cur_hour:
+                start = i
+                break
+    return [round(t) for t in temps[start:start + count] if t is not None]
+
+
 def get_weather(lat: float, lon: float, tz: str, city: str) -> dict:
     """Возвращает текущую погоду и прогноз на день."""
     try:
@@ -22,9 +43,10 @@ def get_weather(lat: float, lon: float, tz: str, city: str) -> dict:
                 "longitude": lon,
                 "timezone": tz,
                 "current": "temperature_2m,apparent_temperature,weather_code,wind_speed_10m",
+                "hourly": "temperature_2m",
                 "daily": "temperature_2m_max,temperature_2m_min,"
                          "precipitation_probability_max,weather_code",
-                "forecast_days": 1,
+                "forecast_days": 2,
             },
             timeout=15,
         )
@@ -43,6 +65,7 @@ def get_weather(lat: float, lon: float, tz: str, city: str) -> dict:
             "t_max": round(daily.get("temperature_2m_max", [0])[0]),
             "t_min": round(daily.get("temperature_2m_min", [0])[0]),
             "precip_prob": daily.get("precipitation_probability_max", [0])[0],
+            "hourly": _next_hours(data.get("hourly", {}), cur.get("time"), 12),
         }
     except Exception as e:
         return {"ok": False, "city": city, "error": str(e)}
